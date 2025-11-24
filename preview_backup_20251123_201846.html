@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview Report Form</title>
+
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- html2pdf.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        .main-layout {
+            display: flex;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .control-panel {
+            width: 350px;
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            overflow-y: auto;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2);
+            font-size: 14px;
+        }
+
+        .control-panel h2 {
+            margin-top: 0;
+            border-bottom: 1px solid #34495e;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+            background: #34495e;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .control-group h4 {
+            margin: 0 0 10px 0;
+            color: #ecf0f1;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 5px;
+            align-items: center;
+        }
+
+        .input-row label {
+            flex: 1;
+            font-size: 12px;
+        }
+
+        .input-row input {
+            width: 60px;
+            padding: 4px;
+            border: none;
+            border-radius: 3px;
+        }
+
+        .input-row input[type="text"] {
+            width: 100%;
+        }
+
+        .report-preview-area {
+            flex-grow: 1;
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            background-color: #bdc3c7;
+            overflow-y: auto;
+        }
+
+        .report-container {
+            width: 210mm;
+            min-height: 297mm;
+            background-color: white;
+            padding: 20mm;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            box-sizing: border-box;
+        }
+
+        .report-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .report-header h3 {
+            margin: 5px 0;
+            font-size: 18px;
+        }
+
+        .report-header p {
+            margin: 5px 0;
+            font-size: 10pt;
+        }
+
+        .attendance-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            font-size: 10pt;
+        }
+
+        .attendance-table th,
+        .attendance-table td {
+            border: 1px solid black;
+            padding: 5px;
+            text-align: center;
+        }
+
+        .attendance-table th {
+            font-weight: bold;
+        }
+
+        .summary-row {
+            background-color: #f9f2e0;
+            font-weight: bold;
+        }
+
+        .grand-total-row {
+            font-weight: bold;
+        }
+
+        .duty-notes {
+            margin-top: 20px;
+            font-size: 10pt;
+        }
+
+        .note-header {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .note-content p {
+            margin: 5px 0;
+            display: flex;
+            align-items: baseline;
+            line-height: 1.6;
+        }
+
+        .dotted-line {
+            border-bottom: 1px dotted #000;
+            display: inline-block;
+            flex-grow: 1;
+            margin-left: 5px;
+            min-width: 50px;
+        }
+
+        .signature-area {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            margin-top: 50px;
+            padding-right: 50px;
+            font-size: 10pt;
+        }
+
+        .signature-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            align-items: flex-start;
+        }
+
+        .signature-block {
+            display: flex;
+            justify-content: center;
+        }
+
+        .signature-grid {
+            display: grid;
+            grid-template-columns: max-content max-content max-content;
+            align-items: baseline;
+            column-gap: 5px;
+            row-gap: 15px;
+        }
+
+        @media print {
+            body {
+                background-color: white;
+                display: block;
+            }
+
+            .control-panel {
+                display: none;
+            }
+
+            .report-preview-area {
+                padding: 0;
+                background-color: white;
+                display: block;
+            }
+
+            .report-container {
+                box-shadow: none;
+                width: 100%;
+                padding: 0;
+                margin: 0;
+            }
+
+            .report-header {
+                margin-bottom: 10px;
+            }
+
+            .duty-notes {
+                margin-top: 10px;
+            }
+
+            .signature-area {
+                margin-top: 30px;
+                padding-right: 10px;
+            }
+
+            .signature-wrapper {
+                gap: 20px;
+            }
+
+            @page {
+                size: A4;
+                margin: 15mm;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+
+    <script type="text/babel">
+        const firebaseConfig = {
+            apiKey: "AIzaSyBYoxdfAV9VwjBiOxHNi1Adu9IP4-ySgGU",
+            authDomain: "tester010-1a27e.firebaseapp.com",
+            projectId: "tester010-1a27e",
+            storageBucket: "tester010-1a27e.firebasestorage.app",
+            messagingSenderId: "382540758055",
+            appId: "1:382540758055:web:167349ce9df428d8f4a202",
+            measurementId: "G-9ZFW3LE63X"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+
+        const GRADES = [
+            'อนุบาลปีที่ 2 (4 ขวบ)', 'อนุบาลปีที่ 3 (5 ขวบ)',
+            'ประถมศึกษาปีที่ 1', 'ประถมศึกษาปีที่ 2', 'ประถมศึกษาปีที่ 3',
+            'ประถมศึกษาปีที่ 4', 'ประถมศึกษาปีที่ 5', 'ประถมศึกษาปีที่ 6'
+        ];
+
+        const INITIAL_STUDENT_DATA = {};
+        GRADES.forEach(g => {
+            INITIAL_STUDENT_DATA[g] = {
+                maleTotal: 0, femaleTotal: 0,
+                attendedMale: 0, attendedFemale: 0,
+                absentMale: 0, absentFemale: 0
+            };
+        });
+
+        const INITIAL_DUTY_DATA = {
+            morningActivity1: "",
+            morningActivity2: "",
+            afternoonActivity: "",
+            otherActivity: "",
+            day: "",
+            date: "",
+            month: "",
+            year: ""
+        };
+
+        const ControlPanel = ({ studentData, dutyData, onStudentChange, onDutyChange, onPrint }) => {
+            const fileInputRef = React.useRef(null);
+
+            const handleDateSelect = (e) => {
+                const dateStr = e.target.value;
+                if (!dateStr) return;
+
+                const [y, m, d] = dateStr.split('-').map(Number);
+                const dateObj = new Date(y, m - 1, d);
+
+                const thaiDays = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+                const thaiMonths = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+
+                onDutyChange('day', thaiDays[dateObj.getDay()]);
+                onDutyChange('date', d);
+                onDutyChange('month', thaiMonths[dateObj.getMonth()]);
+                onDutyChange('year', y + 543);
+            };
+
+            const handleExportPDF = () => {
+                const element = document.getElementById('full-school-report');
+                const opt = {
+                    margin: 10,
+                    filename: `report_${dutyData.date}_${dutyData.month}_${dutyData.year}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { scale: 2 },
+                    < button onClick = { onPrint } style = {{ width: '100%', padding: '10px', marginBottom: '10px', background: '#27ae60', color: 'white', border: 'none', cursor: 'pointer' }
+            }>
+                พิมพ์รายงาน(Print)
+                    </button >
+                    <button onClick={handleExportPDF} style={{ width: '100%', padding: '10px', marginBottom: '10px', background: '#e74c3c', color: 'white', border: 'none', cursor: 'pointer' }}>
+                        ดาวน์โหลด PDF (Download PDF)
+                    </button>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        accept=".csv"
+                        onChange={handleCSVUpload}
+                        style={{ display: 'none' }}
+                    />
+                    <button onClick={() => fileInputRef.current.click()} style={{ width: '100%', padding: '10px', marginBottom: '20px', background: '#3498db', color: 'white', border: 'none', cursor: 'pointer' }}>
+                        อัพโหลด CSV (Upload CSV)
+                    </button>
+
+                    <div className="control-group">
+                        <h4>วันที่ (Date)</h4>
+                        <div className="input-row">
+                            <label>เลือกวันที่:</label>
+                            <input type="date" onChange={handleDateSelect} style={{ width: '100%' }} />
+                        </div>
+                        <div style={{ marginTop: '10px', fontSize: '12px', color: '#bdc3c7' }}>
+                            ปัจจุบัน: {dutyData.day} {dutyData.date} {dutyData.month} {dutyData.year}
+                        </div>
+                    </div>
+
+                    <div className="control-group">
+                        <h4>บันทึกครูเวร (Duty Notes)</h4>
+                        <div className="input-row" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                            <label>หน้าเสาธง เรื่อง 1:</label>
+                            <input type="text" value={dutyData.morningActivity1} onChange={(e) => onDutyChange('morningActivity1', e.target.value)} />
+                        </div>
+                        <div className="input-row" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                            <label>หน้าเสาธง เรื่อง 2:</label>
+                            <input type="text" value={dutyData.morningActivity2} onChange={(e) => onDutyChange('morningActivity2', e.target.value)} />
+                        </div>
+                        <div className="input-row" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                            <label>อบรมช่วงบ่าย:</label>
+                            <input type="text" value={dutyData.afternoonActivity} onChange={(e) => onDutyChange('afternoonActivity', e.target.value)} />
+                        </div>
+                        <div className="input-row" style={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                            <label>เรื่องอื่นๆ:</label>
+                            <input type="text" value={dutyData.otherActivity} onChange={(e) => onDutyChange('otherActivity', e.target.value)} />
+                        </div>
+                    </div>
+
+        {
+            GRADES.map(grade => (
+                <div key={grade} className="control-group">
+                    <h4>{grade}</h4>
+                    <div className="input-row">
+                        <label>เต็ม ชาย:</label>
+                        <input type="number" value={studentData[grade].maleTotal} onChange={(e) => onStudentChange(grade, 'maleTotal', parseInt(e.target.value) || 0)} />
+                        <label>หญิง:</label>
+                        <input type="number" value={studentData[grade].femaleTotal} onChange={(e) => onStudentChange(grade, 'femaleTotal', parseInt(e.target.value) || 0)} />
+                    </div>
+                    <div className="input-row">
+                        <label>มา ชาย:</label>
+                        <input type="number" value={studentData[grade].attendedMale} onChange={(e) => onStudentChange(grade, 'attendedMale', parseInt(e.target.value) || 0)} />
+                        <label>หญิง:</label>
+                        <input type="number" value={studentData[grade].attendedFemale} onChange={(e) => onStudentChange(grade, 'attendedFemale', parseInt(e.target.value) || 0)} />
+                    </div>
+                    <div className="input-row">
+                        <label>ขาด ชาย:</label>
+                        <input type="number" value={studentData[grade].absentMale} onChange={(e) => onStudentChange(grade, 'absentMale', parseInt(e.target.value) || 0)} />
+                        <label>หญิง:</label>
+                        <input type="number" value={studentData[grade].absentFemale} onChange={(e) => onStudentChange(grade, 'absentFemale', parseInt(e.target.value) || 0)} />
+                    </div>
+                </div>
+            ))
+        }
+                </div >
+            );
+        };
+
+        const ReportForm = ({ studentData, dutyData }) => {
+            const calculateStats = (grade) => {
+                if (studentData[grade]) {
+                    const s = studentData[grade];
+                    return {
+                        ...s,
+                        total: s.maleTotal + s.femaleTotal,
+                        attendedTotal: s.attendedMale + s.attendedFemale,
+                        absentTotal: s.absentMale + s.absentFemale
+                    };
+                }
+
+                let agg = { maleTotal: 0, femaleTotal: 0, total: 0, attendedMale: 0, attendedFemale: 0, attendedTotal: 0, absentMale: 0, absentFemale: 0, absentTotal: 0 };
+
+                const targetGrades = grade === 'รวมอนุบาล'
+                    ? GRADES.filter(g => g.includes('อนุบาล'))
+                    : grade === 'รวมประถมศึกษา'
+                        ? GRADES.filter(g => g.includes('ประถมศึกษา'))
+                        : GRADES;
+
+                targetGrades.forEach(g => {
+                    const s = studentData[g];
+                    agg.maleTotal += s.maleTotal;
+                    agg.femaleTotal += s.femaleTotal;
+                    agg.total += (s.maleTotal + s.femaleTotal);
+                    agg.attendedMale += s.attendedMale;
+                    agg.attendedFemale += s.attendedFemale;
+                    agg.attendedTotal += (s.attendedMale + s.attendedFemale);
+                    agg.absentMale += s.absentMale;
+                    agg.absentFemale += s.absentFemale;
+                    agg.absentTotal += (s.absentMale + s.absentFemale);
+                });
+
+                return agg;
+            };
+
+            return (
+                <div id="full-school-report" className="report-container">
+                    <header className="report-header">
+                        <h3>สถิตินักเรียนและการปฏิบัติหน้าที่ของครูเวรประจำวัน</h3>
+                        <p>โรงเรียนประชาสามัคคี สำนักงานเขตพื้นที่การศึกษาประถมศึกษาพระนครศรีอยุธยา เขต 1</p>
+                        <p>ประจำวัน {dutyData.day} ที่ {dutyData.date} เดือน {dutyData.month} พ.ศ. {dutyData.year}</p>
+                    </header>
+
+                    <table className="attendance-table">
+                        <thead>
+                            <tr>
+                                <th rowSpan="2" style={{ width: '5%' }}>ที่</th>
+                                <th rowSpan="2" style={{ width: '25%' }}>ชั้น</th>
+                                <th colSpan="3">จำนวนเต็ม</th>
+                                <th colSpan="3">มาเรียน</th>
+                                <th colSpan="3">ขาดเรียน</th>
+                                <th rowSpan="2" style={{ width: '15%' }}>หมายเหตุ</th>
+                            </tr>
+                            <tr>
+                                <th>ชาย</th>
+                                <th>หญิง</th>
+                                <th>รวม</th>
+                                <th>ชาย</th>
+                                <th>หญิง</th>
+                                <th>รวม</th>
+                                <th>ชาย</th>
+                                <th>หญิง</th>
+                                <th>รวม</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {GRADES.filter(g => g.includes('อนุบาล')).map((grade, index) => {
+                                const data = calculateStats(grade);
+                                return (
+                                    <tr key={grade}>
+                                        <td>{index + 1}</td>
+                                        <td style={{ textAlign: 'left', paddingLeft: '10px' }}>{grade}</td>
+                                        <td>{data.maleTotal || 0}</td>
+                                        <td>{data.femaleTotal || 0}</td>
+                                        <td>{data.total || 0}</td>
+                                        <td>{data.attendedMale || 0}</td>
+                                        <td>{data.attendedFemale || 0}</td>
+                                        <td>{data.attendedTotal || 0}</td>
+                                        <td>{data.absentMale || 0}</td>
+                                        <td>{data.absentFemale || 0}</td>
+                                        <td>{data.absentTotal || 0}</td>
+                                        <td></td>
+                                    </tr>
+                                );
+                            })}
+
+                            <tr className="summary-row">
+                                <td colSpan="2">รวมอนุบาล</td>
+                                <td>{calculateStats('รวมอนุบาล').maleTotal}</td>
+                                <td>{calculateStats('รวมอนุบาล').femaleTotal}</td>
+                                <td>{calculateStats('รวมอนุบาล').total}</td>
+                                <td>{calculateStats('รวมอนุบาล').attendedMale}</td>
+                                <td>{calculateStats('รวมอนุบาล').attendedFemale}</td>
+                                <td>{calculateStats('รวมอนุบาล').attendedTotal}</td>
+                                <td>{calculateStats('รวมอนุบาล').absentMale}</td>
+                                <td>{calculateStats('รวมอนุบาล').absentFemale}</td>
+                                <td>{calculateStats('รวมอนุบาล').absentTotal}</td>
+                                <td></td>
+                            </tr>
+
+                            {GRADES.filter(g => g.includes('ประถมศึกษา')).map((grade, index) => {
+                                const data = calculateStats(grade);
+                                return (
+                                    <tr key={grade}>
+                                        <td>{index + 3}</td>
+                                        <td style={{ textAlign: 'left', paddingLeft: '10px' }}>{grade}</td>
+                                        <td>{data.maleTotal || 0}</td>
+                                        <td>{data.femaleTotal || 0}</td>
+                                        <td>{data.total || 0}</td>
+                                        <td>{data.attendedMale || 0}</td>
+                                        <td>{data.attendedFemale || 0}</td>
+                                        <td>{data.attendedTotal || 0}</td>
+                                        <td>{data.absentMale || 0}</td>
+                                        <td>{data.absentFemale || 0}</td>
+                                        <td>{data.absentTotal || 0}</td>
+                                        <td></td>
+                                    </tr>
+                                );
+                            })}
+
+                            <tr className="summary-row">
+                                <td colSpan="2">รวมประถมศึกษา</td>
+                                <td>{calculateStats('รวมประถมศึกษา').maleTotal}</td>
+                                <td>{calculateStats('รวมประถมศึกษา').femaleTotal}</td>
+                                <td>{calculateStats('รวมประถมศึกษา').total}</td>
+                                <td>{calculateStats('รวมประถมศึกษา').attendedMale}</td>
+                                <td>{calculateStats('รวมประถมศึกษา').attendedFemale}</td>
+                                <td>{calculateStats('รวมประถมศึกษา').attendedTotal}</td>
+                                <td>{calculateStats('รวมประถมศึกษา').absentMale}</td>
+                                <td>{calculateStats('รวมประถมศึกษา').absentFemale}</td>
+                                <td>{calculateStats('รวมประถมศึกษา').absentTotal}</td>
+                                <td></td>
+                            </tr>
+
+                            <tr className="grand-total-row">
+                                <td colSpan="2">รวมนักเรียนทั้งสิ้น</td>
+                                <td>{calculateStats('รวมนักเรียนทั้งสิ้น').maleTotal}</td>
+                                <td>{calculateStats('รวมนักเรียนทั้งสิ้น').femaleTotal}</td>
+                                <td>{calculateStats('รวมนักเรียนทั้งสิ้น').total}</td>
+                                <td>{calculateStats('รวมนักเรียนทั้งสิ้น').attendedMale}</td>
+                                <td>{calculateStats('รวมนักเรียนทั้งสิ้น').attendedFemale}</td>
+                                <td>{calculateStats('รวมนักเรียนทั้งสิ้น').attendedTotal}</td>
+                                <td>{calculateStats('รวมนักเรียนทั้งสิ้น').absentMale}</td>
+                                <td>{calculateStats('รวมนักเรียนทั้งสิ้น').absentFemale}</td>
+                                <td>{calculateStats('รวมนักเรียนทั้งสิ้น').absentTotal}</td>
+                                <td style={{ textAlign: 'left' }}>
+                                    ร้อยละ {(() => {
+                                        const stats = calculateStats('รวมนักเรียนทั้งสิ้น');
+                                        const total = stats.total || 0;
+                                        const attended = stats.attendedTotal || 0;
+                                        return total > 0 ? ((attended / total) * 100).toFixed(2) : '0.00';
+                                    })()}
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div className="duty-notes">
+                        <p className="note-header">● บันทึกครูเวรประจำวัน</p>
+                        <div className="note-content">
+                            <p>เวลา 07.30 น. ควบคุม แนะนำการทำความสะอาดอาคารเรียน บริเวณโรงเรียนและอื่น</p>
+                            <p>เวลา 08.00 น. ให้สัญญาณเข้าแถว ควบคุมการเข้าแถว เคารพธงชาติ ทำกิจกรรมประจำวัน</p>
+
+                            <div style={{ display: 'flex' }}>
+                                <div>อบรมนักเรียนหน้าเสาธง เรื่อง&nbsp;</div>
+                                <div style={{ flexGrow: 1 }}>
+                                    <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                                        <span>1&nbsp;{dutyData.morningActivity1}</span>
+                                        <span className="dotted-line" style={{ flexGrow: 1 }}></span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                                        <span>2&nbsp;{dutyData.morningActivity2}</span>
+                                        <span className="dotted-line" style={{ flexGrow: 1 }}></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <p>เวลา 08.30 น. เข้าห้องเรียน</p>
+                            <p>เวลา 11.30 น. พักกลางวัน / ทำกิจกรรม</p>
+                            <p>เวลา 12.15 น. ให้สัญญาณตีระฆังเข้าเรียนช่วงบ่ายและอบรมเพิ่มเติม</p>
+
+                            <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                                <span style={{ visibility: 'hidden' }}>อบรมนักเรียนหน้าเสาธง </span>
+                                <span>เรื่อง&nbsp;{dutyData.afternoonActivity}</span>
+                                <span className="dotted-line"></span>
+                            </div>
+
+                            <p>เวลา 15.20 น. ให้สัญญาณตีระฆังกลับบ้าน / ควบคุมการเดินแถวกลับบ้าน</p>
+
+                            <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                                <span>เรื่องอื่น ๆ (ถ้ามี)&nbsp;{dutyData.otherActivity}</span>
+                                <span className="dotted-line"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="signature-area">
+                        <div className="signature-wrapper">
+                            <div className="signature-block">
+                                <div className="signature-grid">
+                                    <div style={{ textAlign: 'right' }}>ลงชื่อ</div>
+                                    <div style={{ textAlign: 'center' }}>........................................................</div>
+                                    <div style={{ textAlign: 'left' }}>ครูเวรประจำวัน</div>
+                                    <div></div>
+                                    <div style={{ textAlign: 'center' }}>(.................................................)</div>
+                                    <div></div>
+                                </div>
+                            </div>
+                            <div className="signature-block">
+                                <div className="signature-grid">
+                                    <div style={{ textAlign: 'right' }}>ลงชื่อ</div>
+                                    <div style={{ textAlign: 'center' }}>..................................................</div>
+                                    <div style={{ textAlign: 'left' }}>ผู้อำนวยการ</div>
+                                    <div></div>
+                                    <div style={{ textAlign: 'center' }}>(นางสาวจินดา พลีรักษ์)</div>
+                                    <div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [studentData, setStudentData] = React.useState(INITIAL_STUDENT_DATA);
+            const [dutyData, setDutyData] = React.useState(INITIAL_DUTY_DATA);
+            const [loading, setLoading] = React.useState(true);
+
+            React.useEffect(() => {
+                const fetchData = async () => {
+                    try {
+                        const today = new Date();
+                        const thaiDays = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+                        const thaiMonths = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+
+                        const initialDate = {
+                            day: thaiDays[today.getDay()],
+                            date: today.getDate(),
+                            month: thaiMonths[today.getMonth()],
+                            year: today.getFullYear() + 543
+                        };
+
+                        setDutyData(prev => ({ ...prev, ...initialDate }));
+
+                        const studentsSnapshot = await db.collection('students').get();
+                        const roster = studentsSnapshot.docs.map(doc => doc.data());
+
+                        today.setHours(0, 0, 0, 0);
+                        const attendanceSnapshot = await db.collection('attendance_students')
+                            .where('date', '>=', today.toISOString())
+                            .get();
+                        const attendanceRecords = attendanceSnapshot.docs.map(doc => doc.data());
+
+                        const dutySnapshot = await db.collection('duty_reports')
+                            .where('date', '>=', today.toISOString())
+                            .limit(1)
+                            .get();
+
+                        const newStudentData = JSON.parse(JSON.stringify(INITIAL_STUDENT_DATA));
+
+                        const gradeMap = {
+                            'อ.2': 'อนุบาลปีที่ 2 (4 ขวบ)',
+                            'อ.3': 'อนุบาลปีที่ 3 (5 ขวบ)',
+                            'ป.1': 'ประถมศึกษาปีที่ 1',
+                            'ป.2': 'ประถมศึกษาปีที่ 2',
+                            'ป.3': 'ประถมศึกษาปีที่ 3',
+                            'ป.4': 'ประถมศึกษาปีที่ 4',
+                            'ป.5': 'ประถมศึกษาปีที่ 5',
+                            'ป.6': 'ประถมศึกษาปีที่ 6'
+                        };
+
+                        roster.forEach(student => {
+                            const fullGrade = gradeMap[student.grade];
+                            if (newStudentData[fullGrade]) {
+                                const gender = student.gender === 'ชาย' || student.gender === 'male' ? 'maleTotal' : 'femaleTotal';
+                                newStudentData[fullGrade][gender]++;
+                            }
+                        });
+
+                        attendanceRecords.forEach(record => {
+                            const fullGrade = gradeMap[record.grade];
+                            if (newStudentData[fullGrade]) {
+                                const isMale = record.gender === 'ชาย' || record.gender === 'male';
+                                const isPresent = record.status === 'present';
+                                const target = newStudentData[fullGrade];
+
+                                if (isPresent) {
+                                    if (isMale) target.attendedMale++; else target.attendedFemale++;
+                                } else {
+                                    if (isMale) target.absentMale++; else target.absentFemale++;
+                                }
+                            }
+                        });
+
+                        setStudentData(newStudentData);
+
+                        if (!dutySnapshot.empty) {
+                            setDutyData(prev => ({ ...prev, ...dutySnapshot.docs[0].data() }));
+                        }
+
+                        setLoading(false);
+                    } catch (error) {
+                        console.error("Error fetching data:", error);
+                        setLoading(false);
+                    }
+                };
+
+                fetchData();
+            }, []);
+
+            const handleStudentChange = (grade, field, value) => {
+                setStudentData(prev => ({
+                    ...prev,
+                    [grade]: {
+                        ...prev[grade],
+                        [field]: value
+                    }
+                }));
+            };
+
+            const handleDutyChange = (field, value) => {
+                setDutyData(prev => ({
+                    ...prev,
+                    [field]: value
+                }));
+            };
+
+            const handlePrint = () => {
+</body >
+
+</html >

@@ -1,0 +1,82 @@
+.report-container {
+    font-family: 'TH Sarabun New', sans-serif;
+    /* แนะนำให้ใช้ Font ไทยที่เป็นทางการ */
+    padding: 20mm;
+    width: 210mm;
+    /* ขนาด A4 เพื่อให้เหมาะกับการ Export PDF */
+    margin: 0 auto;
+    font-size: 14pt;
+    /* Increased font size for better readability */
+    color: #000;
+}
+
+.report-header {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+.report-header h3 {
+    margin: 0;
+    font-weight: bold;
+}
+
+.report-header p {
+    margin: 2px 0;
+}
+
+.attendance-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 10px;
+}
+
+.attendance-table th,
+.attendance-table td {
+    border: 1px solid #003366;
+    /* Dark blue border */
+    text-align: center;
+    padding: 4px;
+    height: 22px;
+    font-size: 13pt;
+}
+
+.attendance-table thead th {
+    font-weight: bold;
+    color: #000;
+}
+
+.summary-row {
+    font-weight: bold;
+    background-color: #fce4d6;
+    /* Beige/Orange tint */
+}
+
+.grand-total-row {
+    font-weight: bold;
+}
+
+.duty-notes {
+    margin-top: 10px;
+    line-height: 1.4;
+    font-size: 13pt;
+}
+
+.note-header {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.note-content p {
+    margin: 2px 0;
+    display: flex;
+    align-items: baseline;
+}
+
+.signature-block {
+    text-align: center;
+    width: 300px;
+}
+
+.signature-block p {
+    margin: 10px 0;
+}
