@@ -256,6 +256,17 @@
 </head>
 
 <body>
+    <div id="debug-error-display"
+        style="display:none; color:red; background:white; padding:20px; border:2px solid red; position:fixed; top:0; left:0; z-index:9999; white-space:pre-wrap;">
+    </div>
+    <script>
+        window.onerror = function (message, source, lineno, colno, error) {
+            var display = document.getElementById('debug-error-display');
+            display.style.display = 'block';
+            display.innerText += 'Error: ' + message + '\nSource: ' + source + '\nLine: ' + lineno + '\n\n';
+            console.error(message, error);
+        };
+    </script>
     <div id="root"></div>
 
     <!-- Firebase SDKs -->
