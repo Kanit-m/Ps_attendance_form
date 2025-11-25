@@ -256,6 +256,17 @@
 </head>
 
 <body>
+    <div id="debug-error-display"
+        style="display:none; color:red; background:white; padding:20px; border:2px solid red; position:fixed; top:0; left:0; z-index:9999; white-space:pre-wrap;">
+    </div>
+    <script>
+        window.onerror = function (message, source, lineno, colno, error) {
+            var display = document.getElementById('debug-error-display');
+            display.style.display = 'block';
+            display.innerText += 'Error: ' + message + '\nSource: ' + source + '\nLine: ' + lineno + '\n\n';
+            console.error(message, error);
+        };
+    </script>
     <div id="root"></div>
 
     <!-- Firebase SDKs -->
@@ -312,9 +323,9 @@
         const ControlPanel = ({ studentData, dutyData, onStudentChange, onBulkStudentChange, onDutyChange, onPrint }) => {
             const [encoding, setEncoding] = React.useState('UTF-8');
             const [showCsvSettings, setShowCsvSettings] = React.useState(false);
-            const [showTotals, setShowTotals] = React.useState(false);
 
-            // Default mapping
+            // Default mapping based on the previous hardcoded values:
+            // 1:Class, 2:Male, 3:Female, 4:Ignore, 5:AttMale, 6:AttFem, 7:Ignore, 8:AbsMale, 9:AbsFem
             const [columnDefs, setColumnDefs] = React.useState([
                 'className', 'maleTotal', 'femaleTotal', 'ignore',
                 'attendedMale', 'attendedFemale', 'ignore',
@@ -335,10 +346,13 @@
             const handleDateSelect = (e) => {
                 const dateStr = e.target.value;
                 if (!dateStr) return;
+
                 const [y, m, d] = dateStr.split('-').map(Number);
                 const dateObj = new Date(y, m - 1, d);
+
                 const thaiDays = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
                 const thaiMonths = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+
                 onDutyChange('day', thaiDays[dateObj.getDay()]);
                 onDutyChange('date', d);
                 onDutyChange('month', thaiMonths[dateObj.getMonth()]);
@@ -372,11 +386,13 @@
             const handleFileUpload = (e) => {
                 const file = e.target.files[0];
                 if (!file) return;
+
                 const reader = new FileReader();
                 reader.onload = (event) => {
                     let text = event.target.result;
                     if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
                     const rows = text.split('\n').map(row => row.trim()).filter(row => row);
+
                     const newStudentData = JSON.parse(JSON.stringify(INITIAL_STUDENT_DATA));
                     const gradeMap = {
                         'อ.2': 'อนุบาลปีที่ 2 (4 ขวบ)', 'อนุบาล 2': 'อนุบาลปีที่ 2 (4 ขวบ)', 'อนุบาลปีที่ 2': 'อนุบาลปีที่ 2 (4 ขวบ)',
@@ -388,15 +404,19 @@
                         'ป.5': 'ประถมศึกษาปีที่ 5', 'ประถม 5': 'ประถมศึกษาปีที่ 5', 'ประถมศึกษาปีที่ 5': 'ประถมศึกษาปีที่ 5',
                         'ป.6': 'ประถมศึกษาปีที่ 6', 'ประถม 6': 'ประถมศึกษาปีที่ 6', 'ประถมศึกษาปีที่ 6': 'ประถมศึกษาปีที่ 6'
                     };
+
                     let matchCount = 0;
                     let unmappedClasses = new Set();
                     const getColIndex = (field) => columnDefs.indexOf(field);
+
                     rows.forEach((row) => {
                         const cols = row.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
                         const classIdx = getColIndex('className');
                         if (classIdx === -1 || !cols[classIdx]) return;
+
                         const classNameRaw = cols[classIdx];
                         const className = gradeMap[classNameRaw] || classNameRaw;
+
                         if (newStudentData[className]) {
                             const getVal = (field) => {
                                 const idx = getColIndex(field);
@@ -404,6 +424,8 @@
                             };
                             newStudentData[className].maleTotal = getVal('maleTotal');
                             newStudentData[className].femaleTotal = getVal('femaleTotal');
+                            newStudentData[className].attendedMale = getVal('attendedMale');
+                            newStudentData[className].attendedFemale = getVal('attendedFemale');
                             newStudentData[className].absentMale = getVal('absentMale');
                             newStudentData[className].absentFemale = getVal('absentFemale');
                             matchCount++;
@@ -411,6 +433,7 @@
                             unmappedClasses.add(classNameRaw);
                         }
                     });
+
                     if (matchCount > 0) {
                         if (onBulkStudentChange) {
                             onBulkStudentChange(newStudentData);
@@ -492,18 +515,6 @@
                     </div>
 
                     <div className="control-group">
-                        <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                            <input
-                                type="checkbox"
-                                checked={showTotals}
-                                onChange={(e) => setShowTotals(e.target.checked)}
-                                style={{ width: 'auto', marginRight: '10px' }}
-                            />
-                            แสดง/แก้ไข จำนวนนักเรียนเต็ม (Show Totals)
-                        </label>
-                    </div>
-
-                    <div className="control-group">
                         <h4>วันที่ (Date)</h4>
                         <div className="input-row">
                             <label>เลือกวันที่:</label>
@@ -538,14 +549,18 @@
                         GRADES.map(grade => (
                             <div key={grade} className="control-group">
                                 <h4>{grade}</h4>
-                                {showTotals && (
-                                    <div className="input-row">
-                                        <label>เต็ม ชาย:</label>
-                                        <input type="number" value={studentData[grade].maleTotal} onChange={(e) => onStudentChange(grade, 'maleTotal', parseInt(e.target.value) || 0)} />
-                                        <label>หญิง:</label>
-                                        <input type="number" value={studentData[grade].femaleTotal} onChange={(e) => onStudentChange(grade, 'femaleTotal', parseInt(e.target.value) || 0)} />
-                                    </div>
-                                )}
+                                <div className="input-row">
+                                    <label>เต็ม ชาย:</label>
+                                    <input type="number" value={studentData[grade].maleTotal} onChange={(e) => onStudentChange(grade, 'maleTotal', parseInt(e.target.value) || 0)} />
+                                    <label>หญิง:</label>
+                                    <input type="number" value={studentData[grade].femaleTotal} onChange={(e) => onStudentChange(grade, 'femaleTotal', parseInt(e.target.value) || 0)} />
+                                </div>
+                                <div className="input-row">
+                                    <label>มา ชาย:</label>
+                                    <input type="number" value={studentData[grade].attendedMale} onChange={(e) => onStudentChange(grade, 'attendedMale', parseInt(e.target.value) || 0)} />
+                                    <label>หญิง:</label>
+                                    <input type="number" value={studentData[grade].attendedFemale} onChange={(e) => onStudentChange(grade, 'attendedFemale', parseInt(e.target.value) || 0)} />
+                                </div>
                                 <div className="input-row">
                                     <label>ขาด ชาย:</label>
                                     <input type="number" value={studentData[grade].absentMale} onChange={(e) => onStudentChange(grade, 'absentMale', parseInt(e.target.value) || 0)} />
@@ -564,16 +579,10 @@
             const calculateStats = (grade) => {
                 if (studentData[grade]) {
                     const s = studentData[grade];
-                    // Auto-calculate attended
-                    const attendedMale = s.maleTotal - s.absentMale;
-                    const attendedFemale = s.femaleTotal - s.absentFemale;
-
                     return {
                         ...s,
-                        attendedMale,
-                        attendedFemale,
                         total: s.maleTotal + s.femaleTotal,
-                        attendedTotal: attendedMale + attendedFemale,
+                        attendedTotal: s.attendedMale + s.attendedFemale,
                         absentTotal: s.absentMale + s.absentFemale
                     };
                 }
@@ -592,15 +601,9 @@
                     agg.maleTotal += s.maleTotal;
                     agg.femaleTotal += s.femaleTotal;
                     agg.total += (s.maleTotal + s.femaleTotal);
-
-                    // Calculate attended for aggregation based on current logic (Total - Absent)
-                    const rowAttendedMale = s.maleTotal - s.absentMale;
-                    const rowAttendedFemale = s.femaleTotal - s.absentFemale;
-
-                    agg.attendedMale += rowAttendedMale;
-                    agg.attendedFemale += rowAttendedFemale;
-                    agg.attendedTotal += (rowAttendedMale + rowAttendedFemale);
-
+                    agg.attendedMale += s.attendedMale;
+                    agg.attendedFemale += s.attendedFemale;
+                    agg.attendedTotal += (s.attendedMale + s.attendedFemale);
                     agg.absentMale += s.absentMale;
                     agg.absentFemale += s.absentFemale;
                     agg.absentTotal += (s.absentMale + s.absentFemale);
@@ -615,7 +618,7 @@
                         <h3>สถิตินักเรียนและการปฏิบัติหน้าที่ของครูเวรประจำวัน</h3>
                         <p>โรงเรียนประชาสามัคคี สำนักงานเขตพื้นที่การศึกษาประถมศึกษาพระนครศรีอยุธยา เขต 1</p>
                         <p>ประจำวัน {dutyData.day} ที่ {dutyData.date} เดือน {dutyData.month} พ.ศ. {dutyData.year}</p>
-                    </header >
+                    </header>
 
                     <table className="attendance-table">
                         <thead>
